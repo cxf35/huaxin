@@ -16,74 +16,110 @@ a {color:#000;font-size:14px;}
 
 /* ========== 手机端适配 ========== */
 @media screen and (max-width: 768px) {
-    body {
-        overflow-x: hidden;
-    }
-    #main {
+    html, body {
         width: 100%;
+        height: 100%;
         overflow: hidden;
     }
-    #wrap {
-        width: 100% !important;
-        height: 100vh !important;
-        margin: 0 auto !important;
+
+    #main {
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         overflow: hidden;
         position: relative;
     }
+
+    #wrap {
+        width: 1100px !important;
+        height: 680px !important;
+        margin: 0 !important;
+        position: relative;
+        flex-shrink: 0;
+    }
+
     #canvas {
-        width: 100% !important;
-        height: 100% !important;
+        width: 1100px !important;
+        height: 680px !important;
         display: block;
     }
+
     #text {
-        width: 80% !important;
-        height: auto !important;
-        left: 10% !important;
-        top: 6% !important;
+        width: 400px !important;
+        height: 425px !important;
+        left: 60px !important;
+        top: 80px !important;
         position: absolute;
     }
+
     #code {
-        font-size: 14px !important;
+        font-size: 16px !important;
         line-height: 1.6;
     }
+
     .say {
-        font-size: 14px !important;
-        margin-left: 2px;
+        font-size: 16px !important;
+        margin-left: 5px;
     }
+
     #clock-box {
-        left: 50% !important;
-        top: auto !important;
-        bottom: 8% !important;
-        transform: translateX(-50%);
-        font-size: 14px !important;
-        text-align: center;
-        width: 90%;
+        left: 60px !important;
+        top: 550px !important;
+        bottom: auto !important;
+        transform: none !important;
+        font-size: 28px !important;
+        text-align: left;
+        width: auto;
     }
+
     #clock-box font {
-        font-size: 14px !important;
+        font-size: 28px !important;
     }
+
     #clock {
-        margin-left: 0 !important;
-        margin-top: 5px;
+        margin-left: 48px !important;
+        margin-top: 0;
     }
+
     #clock .digit {
-        font-size: 24px !important;
+        font-size: 64px !important;
+    }
+
+    /* 底部来源文字 */
+    body > div[style="text-align:center;"] {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: 0;
+        padding: 8px 0;
+        background: #ffe;
+        font-size: 12px;
+        z-index: 100;
+    }
+
+    body > div[style="text-align:center;"] p {
+        margin: 0;
+        font-size: 12px;
+    }
+
+    body > div[style="text-align:center;"] a {
+        font-size: 12px;
     }
 }
 
-/* 小屏幕手机进一步缩小 */
+/* 小屏幕手机 */
 @media screen and (max-width: 480px) {
-    #code {
-        font-size: 12px !important;
+    body > div[style="text-align:center;"] {
+        font-size: 10px;
+        padding: 6px 0;
     }
-    .say {
-        font-size: 12px !important;
-    }
-    #clock-box {
-        font-size: 12px !important;
-        bottom: 6% !important;
-    }
-    #clock .digit {
-        font-size: 18px !important;
+
+    body > div[style="text-align:center;"] p,
+    body > div[style="text-align:center;"] a {
+        font-size: 10px;
     }
 }
