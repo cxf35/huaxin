@@ -13,3 +13,77 @@ a {color:#000;font-size:14px;}
 .hand{cursor:pointer;}
 .say{margin-left:5px;color:#FF0000;}
 .space{margin-right:150px;}
+
+/* ========== 手机端适配 ========== */
+@media screen and (max-width: 768px) {
+    body {
+        overflow-x: hidden;
+    }
+    #main {
+        width: 100%;
+        overflow: hidden;
+    }
+    #wrap {
+        width: 100% !important;
+        height: 100vh !important;
+        margin: 0 auto !important;
+        overflow: hidden;
+        position: relative;
+    }
+    #canvas {
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
+    }
+    #text {
+        width: 80% !important;
+        height: auto !important;
+        left: 10% !important;
+        top: 6% !important;
+        position: absolute;
+    }
+    #code {
+        font-size: 14px !important;
+        line-height: 1.6;
+    }
+    .say {
+        font-size: 14px !important;
+        margin-left: 2px;
+    }
+    #clock-box {
+        left: 50% !important;
+        top: auto !important;
+        bottom: 8% !important;
+        transform: translateX(-50%);
+        font-size: 14px !important;
+        text-align: center;
+        width: 90%;
+    }
+    #clock-box font {
+        font-size: 14px !important;
+    }
+    #clock {
+        margin-left: 0 !important;
+        margin-top: 5px;
+    }
+    #clock .digit {
+        font-size: 24px !important;
+    }
+}
+
+/* 小屏幕手机进一步缩小 */
+@media screen and (max-width: 480px) {
+    #code {
+        font-size: 12px !important;
+    }
+    .say {
+        font-size: 12px !important;
+    }
+    #clock-box {
+        font-size: 12px !important;
+        bottom: 6% !important;
+    }
+    #clock .digit {
+        font-size: 18px !important;
+    }
+}
