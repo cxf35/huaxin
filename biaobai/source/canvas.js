@@ -5,56 +5,123 @@
 		return false
 	}
 
-	// 手机端自适应缩放
+	// 移动端缩放相关变量
 	var mobileScale = 1;
+	var mobileLeft = 0;
+	var mobileTop = 0;
+	var isMobilePortrait = false;
+
+	// 爱心在 canvas 内的大致 Y 坐标（用于定位参考）
+	var heartCanvasY = 260;
 
 	function resizeForMobile() {
 		var wrap = $('#wrap');
 		var main = $('#main');
-		var windowWidth = $(window).width();
-		var windowHeight = $(window).height();
-		var designWidth = 1100;
-		var designHeight = 680;
-		var bottomPadding = 40; // 底部来源文字留空
+		var windowW = $(window).width();
+		var windowH = $(window).height();
+		var designW = 1100;
+		var designH = 680;
+		var bottomBarH = 45; // 底部来源文字预留高度
 
-		if (windowWidth < 768) {
-			// 计算缩放比例：宽度和高度都考虑
-			var availableHeight = windowHeight - bottomPadding;
-			var scaleX = windowWidth / designWidth;
-			var scaleY = availableHeight / designHeight;
-			var scale = Math.min(scaleX, scaleY);
-			
+		// 判断是否手机竖屏
+		isMobilePortrait = (windowW < 768 && windowH > windowW);
+
+		if (isMobilePortrait) {
+			var availableH = windowH - bottomBarH;
+
+			// 目标：让爱心位于屏幕可用高度的 40% 位置（稍偏上，下方留给树和时钟）
+			var targetHeartY = availableH * 0.40;
+
+			// 两种约束计算 scale：
+			// 1. 按爱心目标位置计算
+			var scaleByHeart = targetHeartY / heartCanvasY;
+			// 2. 按底部不超出计算（树底部+时钟不能超出可用区域底部）
+			var clockBottomY = 620; // 时钟底部大概位置
+			var scaleByBottom = availableH / clockBottomY;
+
+			// 取较小值，确保内容都在屏幕内
+			var scale = Math.min(scaleByHeart * 1.15, scaleByBottom);
+
+			// 限制最小和最大缩放
+			scale = Math.max(0.4, Math.min(scale, 1.2));
+
 			mobileScale = scale;
+
+			// 计算 wrap 位置：爱心视觉位置 = heartCanvasY * scale
+			// wrap 顶部 = targetHeartY - heartCanvasY * scale
+			var wrapTop = targetHeartY - heartCanvasY * scale;
+			var wrapLeft = (windowW - designW * scale) / 2; // 水平居中
+
+			mobileLeft = wrapLeft;
+			mobileTop = wrapTop;
 
 			main.css({
 				'width': '100%',
-				'height': windowHeight + 'px',
-				'display': 'flex',
-				'align-items': 'center',
-				'justify-content': 'center',
+				'height': windowH + 'px',
 				'overflow': 'hidden',
-				'position': 'relative'
+				'position': 'relative',
+				'display': 'block'
 			});
 
 			wrap.css({
-				'width': designWidth + 'px',
-				'height': designHeight + 'px',
-				'transform': 'scale(' + scale + ')',
-				'transform-origin': 'center center',
+				'position': 'absolute',
+				'left': wrapLeft + 'px',
+				'top': wrapTop + 'px',
+				'width': designW + 'px',
+				'height': designH + 'px',
 				'margin': '0',
-				'position': 'relative',
-				'flex-shrink': '0'
+				'transform': 'scale(' + scale + ')',
+				'transform-origin': '0 0'
 			});
 
-			$('body, html').css({
+			$('html, body').css({
 				'width': '100%',
 				'height': '100%',
 				'overflow': 'hidden',
 				'margin': '0',
 				'padding': '0'
 			});
+
+		} else if (windowW < 900 && windowW >= windowH) {
+			// 手机横屏：整体缩放居中
+			var scaleL = Math.min(windowW / designW, (windowH - 30) / designH);
+			mobileScale = scaleL;
+
+			main.css({
+				'width': '100%',
+				'height': windowH + 'px',
+				'display': 'flex',
+				'align-items': 'center',
+				'justify-content': 'center',
+				'overflow': 'hidden'
+			});
+
+			wrap.css({
+				'position': 'relative',
+				'left': 'auto',
+				'top': 'auto',
+				'width': designW + 'px',
+				'height': designH + 'px',
+				'margin': '0',
+				'transform': 'scale(' + scaleL + ')',
+				'transform-origin': 'center center',
+				'flex-shrink': '0'
+			});
+
+			$('html, body').css({
+				'width': '100%',
+				'height': '100%',
+				'overflow': 'hidden'
+			});
+
+			mobileLeft = (windowW - designW * scaleL) / 2;
+			mobileTop = (windowH - designH * scaleL) / 2;
+
 		} else {
+			// 桌面端
 			mobileScale = 1;
+			mobileLeft = 0;
+			mobileTop = 0;
 
 			main.css({
 				'width': '100%',
@@ -64,13 +131,16 @@
 			});
 
 			wrap.css({
-				'width': designWidth + 'px',
-				'height': designHeight + 'px',
+				'position': 'relative',
+				'left': 'auto',
+				'top': 'auto',
+				'width': designW + 'px',
+				'height': designH + 'px',
 				'transform': 'none',
 				'margin': '10px auto 0'
 			});
 
-			$('body, html').css({
+			$('html, body').css({
 				'width': 'auto',
 				'height': 'auto',
 				'overflow': 'auto'
@@ -78,6 +148,7 @@
 		}
 	}
 
+	// 初始化和窗口变化时调用
 	resizeForMobile();
 	$(window).resize(function() {
 		resizeForMobile();
@@ -115,13 +186,13 @@
 		var offset = canvas.offset();
 		var x = e.pageX - offset.left;
 		var y = e.pageY - offset.top;
-		
+
 		// 缩放后，需要将视觉坐标转换回 canvas 原始坐标
 		if (mobileScale !== 1) {
 			x = x / mobileScale;
 			y = y / mobileScale;
 		}
-		
+
 		return { x: x, y: y };
 	}
 
@@ -137,6 +208,28 @@
 	}).mousemove(function(e) {
 		var coords = getCanvasCoords(e);
 		canvas.toggleClass('hand', seed.hover(coords.x, coords.y));
+	});
+
+	// 触摸设备支持
+	canvas.on('touchstart', function(e) {
+		e.preventDefault();
+		var touch = e.originalEvent.touches[0];
+		var coords = getCanvasCoords(touch);
+		if (seed.hover(coords.x, coords.y)) {
+			hold = 0;
+			canvas.unbind("click");
+			canvas.unbind("mousemove");
+			canvas.unbind("touchstart");
+			canvas.removeClass('hand');
+			// 尝试播放音乐（移动端需要用户交互）
+			var bgm = $("#loveBgm")[0];
+			var playPromise = bgm.play();
+			if (playPromise !== undefined) {
+				playPromise.catch(function() {
+					// 自动播放被阻止时，首次点击再播放
+				});
+			}
+		}
 	});
 
 	var seedAnimate = eval(Jscex.compile("async",
