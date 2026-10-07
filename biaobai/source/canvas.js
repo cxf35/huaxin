@@ -6,34 +6,75 @@
 	}
 
 	// 手机端自适应缩放
+	var mobileScale = 1;
+
 	function resizeForMobile() {
 		var wrap = $('#wrap');
+		var main = $('#main');
 		var windowWidth = $(window).width();
+		var windowHeight = $(window).height();
 		var designWidth = 1100;
 		var designHeight = 680;
+		var bottomPadding = 40; // 底部来源文字留空
 
-		if (windowWidth < designWidth) {
-			var scale = windowWidth / designWidth;
-			var scaledHeight = designHeight * scale;
+		if (windowWidth < 768) {
+			// 计算缩放比例：宽度和高度都考虑
+			var availableHeight = windowHeight - bottomPadding;
+			var scaleX = windowWidth / designWidth;
+			var scaleY = availableHeight / designHeight;
+			var scale = Math.min(scaleX, scaleY);
 			
+			mobileScale = scale;
+
+			main.css({
+				'width': '100%',
+				'height': windowHeight + 'px',
+				'display': 'flex',
+				'align-items': 'center',
+				'justify-content': 'center',
+				'overflow': 'hidden',
+				'position': 'relative'
+			});
+
 			wrap.css({
 				'width': designWidth + 'px',
 				'height': designHeight + 'px',
 				'transform': 'scale(' + scale + ')',
-				'transform-origin': 'top center',
-				'margin': '0 auto',
-				'position': 'relative'
+				'transform-origin': 'center center',
+				'margin': '0',
+				'position': 'relative',
+				'flex-shrink': '0'
 			});
 
-			$('body').css('height', scaledHeight + 'px');
+			$('body, html').css({
+				'width': '100%',
+				'height': '100%',
+				'overflow': 'hidden',
+				'margin': '0',
+				'padding': '0'
+			});
 		} else {
+			mobileScale = 1;
+
+			main.css({
+				'width': '100%',
+				'height': 'auto',
+				'display': 'block',
+				'overflow': 'visible'
+			});
+
 			wrap.css({
 				'width': designWidth + 'px',
 				'height': designHeight + 'px',
 				'transform': 'none',
 				'margin': '10px auto 0'
 			});
-			$('body').css('height', 'auto');
+
+			$('body, html').css({
+				'width': 'auto',
+				'height': 'auto',
+				'overflow': 'auto'
+			});
 		}
 	}
 
@@ -68,13 +109,25 @@
 	var seed = tree.seed;
 	var foot = tree.footer;
 	var hold = 1;
+
+	// 获取缩放后的正确点击坐标
+	function getCanvasCoords(e) {
+		var offset = canvas.offset();
+		var x = e.pageX - offset.left;
+		var y = e.pageY - offset.top;
+		
+		// 缩放后，需要将视觉坐标转换回 canvas 原始坐标
+		if (mobileScale !== 1) {
+			x = x / mobileScale;
+			y = y / mobileScale;
+		}
+		
+		return { x: x, y: y };
+	}
+
 	canvas.click(function(e) {
-		var offset = canvas.offset(),
-		x,
-		y;
-		x = e.pageX - offset.left;
-		y = e.pageY - offset.top;
-		if (seed.hover(x, y)) {
+		var coords = getCanvasCoords(e);
+		if (seed.hover(coords.x, coords.y)) {
 			hold = 0;
 			canvas.unbind("click");
 			canvas.unbind("mousemove");
@@ -82,13 +135,10 @@
 			$("#loveBgm")[0].play();
 		}
 	}).mousemove(function(e) {
-		var offset = canvas.offset(),
-		x,
-		y;
-		x = e.pageX - offset.left;
-		y = e.pageY - offset.top;
-		canvas.toggleClass('hand', seed.hover(x, y));
+		var coords = getCanvasCoords(e);
+		canvas.toggleClass('hand', seed.hover(coords.x, coords.y));
 	});
+
 	var seedAnimate = eval(Jscex.compile("async",
 	function() {
 		seed.draw();
