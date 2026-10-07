@@ -7,12 +7,8 @@
 
 	// 移动端缩放相关变量
 	var mobileScale = 1;
-	var mobileLeft = 0;
-	var mobileTop = 0;
 	var isMobilePortrait = false;
-
-	// 爱心在 canvas 内的大致 Y 坐标（用于定位参考）
-	var heartCanvasY = 260;
+	var isMobileLandscape = false;
 
 	function resizeForMobile() {
 		var wrap = $('#wrap');
@@ -21,39 +17,31 @@
 		var windowH = $(window).height();
 		var designW = 1100;
 		var designH = 680;
-		var bottomBarH = 45; // 底部来源文字预留高度
+		var bottomBarH = 40; // 底部来源文字预留高度
 
-		// 判断是否手机竖屏
 		isMobilePortrait = (windowW < 768 && windowH > windowW);
+		isMobileLandscape = (windowW < 900 && windowW >= windowH);
 
 		if (isMobilePortrait) {
+			// ========== 手机竖屏 ==========
+			// 可用高度 = 屏幕高度 - 底部来源条
 			var availableH = windowH - bottomBarH;
 
-			// 目标：让爱心位于屏幕可用高度的 40% 位置（稍偏上，下方留给树和时钟）
-			var targetHeartY = availableH * 0.40;
+			// 按高度缩放，让树尽可能大（占可用高度的 80%，上下留出文字和时钟空间）
+			var scale = availableH / designH * 0.85;
 
-			// 两种约束计算 scale：
-			// 1. 按爱心目标位置计算
-			var scaleByHeart = targetHeartY / heartCanvasY;
-			// 2. 按底部不超出计算（树底部+时钟不能超出可用区域底部）
-			var clockBottomY = 620; // 时钟底部大概位置
-			var scaleByBottom = availableH / clockBottomY;
-
-			// 取较小值，确保内容都在屏幕内
-			var scale = Math.min(scaleByHeart * 1.15, scaleByBottom);
-
-			// 限制最小和最大缩放
-			scale = Math.max(0.4, Math.min(scale, 1.2));
-
+			// 限制最小缩放
+			scale = Math.max(0.5, scale);
 			mobileScale = scale;
 
-			// 计算 wrap 位置：爱心视觉位置 = heartCanvasY * scale
-			// wrap 顶部 = targetHeartY - heartCanvasY * scale
-			var wrapTop = targetHeartY - heartCanvasY * scale;
-			var wrapLeft = (windowW - designW * scale) / 2; // 水平居中
+			// 计算缩放后的 wrap 尺寸
+			var scaledW = designW * scale;
+			var scaledH = designH * scale;
 
-			mobileLeft = wrapLeft;
-			mobileTop = wrapTop;
+			// 水平居中（左右可能裁剪，但树的主体在中间）
+			var wrapLeft = (windowW - scaledW) / 2;
+			// 垂直居中
+			var wrapTop = (availableH - scaledH) / 2;
 
 			main.css({
 				'width': '100%',
@@ -74,6 +62,9 @@
 				'transform-origin': '0 0'
 			});
 
+			// 重置文字和时钟的内联样式，让 CSS 媒体查询的 fixed 定位生效
+			$('#text, #clock-box, #code, #clock .digit').removeAttr('style');
+
 			$('html, body').css({
 				'width': '100%',
 				'height': '100%',
@@ -82,31 +73,58 @@
 				'padding': '0'
 			});
 
-		} else if (windowW < 900 && windowW >= windowH) {
-			// 手机横屏：整体缩放居中
+		} else if (isMobileLandscape) {
+			// ========== 手机横屏：整体等比缩放居中 ==========
 			var scaleL = Math.min(windowW / designW, (windowH - 30) / designH);
 			mobileScale = scaleL;
+
+			var scaledWL = designW * scaleL;
+			var scaledHL = designH * scaleL;
+			var wrapLeftL = (windowW - scaledWL) / 2;
+			var wrapTopL = (windowH - scaledHL) / 2;
 
 			main.css({
 				'width': '100%',
 				'height': windowH + 'px',
-				'display': 'flex',
-				'align-items': 'center',
-				'justify-content': 'center',
-				'overflow': 'hidden'
+				'display': 'block',
+				'overflow': 'hidden',
+				'position': 'relative'
 			});
 
 			wrap.css({
-				'position': 'relative',
-				'left': 'auto',
-				'top': 'auto',
+				'position': 'absolute',
+				'left': wrapLeftL + 'px',
+				'top': wrapTopL + 'px',
 				'width': designW + 'px',
 				'height': designH + 'px',
 				'margin': '0',
 				'transform': 'scale(' + scaleL + ')',
-				'transform-origin': 'center center',
-				'flex-shrink': '0'
+				'transform-origin': '0 0'
 			});
+
+			// 文字和时钟跟随 wrap 定位和缩放
+			var textEl = $('#text');
+			var clockEl = $('#clock-box');
+			textEl.css({
+				'position': 'absolute',
+				'left': (wrapLeftL + 60 * scaleL) + 'px',
+				'top': (wrapTopL + 80 * scaleL) + 'px',
+				'width': (400 * scaleL) + 'px',
+				'height': (425 * scaleL) + 'px',
+				'font-size': (16 * scaleL) + 'px',
+				'transform': 'none',
+				'text-align': 'left'
+			});
+			clockEl.css({
+				'position': 'absolute',
+				'left': (wrapLeftL + 60 * scaleL) + 'px',
+				'top': (wrapTopL + 550 * scaleL) + 'px',
+				'font-size': (28 * scaleL) + 'px',
+				'transform': 'none',
+				'text-align': 'left'
+			});
+			$('#clock .digit').css('font-size', (64 * scaleL) + 'px');
+			$('#code').css('font-size', (16 * scaleL) + 'px');
 
 			$('html, body').css({
 				'width': '100%',
@@ -114,14 +132,11 @@
 				'overflow': 'hidden'
 			});
 
-			mobileLeft = (windowW - designW * scaleL) / 2;
-			mobileTop = (windowH - designH * scaleL) / 2;
-
 		} else {
-			// 桌面端
+			// ========== 桌面端 ==========
 			mobileScale = 1;
-			mobileLeft = 0;
-			mobileTop = 0;
+			isMobilePortrait = false;
+			isMobileLandscape = false;
 
 			main.css({
 				'width': '100%',
@@ -139,6 +154,9 @@
 				'transform': 'none',
 				'margin': '10px auto 0'
 			});
+
+			// 重置文字和时钟样式
+			$('#text, #clock-box, #code, #clock .digit').removeAttr('style');
 
 			$('html, body').css({
 				'width': 'auto',
@@ -196,14 +214,24 @@
 		return { x: x, y: y };
 	}
 
+	function startLove() {
+		hold = 0;
+		canvas.unbind("click");
+		canvas.unbind("mousemove");
+		canvas.unbind("touchstart");
+		canvas.removeClass('hand');
+		// 尝试播放音乐
+		var bgm = $("#loveBgm")[0];
+		var playPromise = bgm.play();
+		if (playPromise !== undefined) {
+			playPromise.catch(function() {});
+		}
+	}
+
 	canvas.click(function(e) {
 		var coords = getCanvasCoords(e);
 		if (seed.hover(coords.x, coords.y)) {
-			hold = 0;
-			canvas.unbind("click");
-			canvas.unbind("mousemove");
-			canvas.removeClass('hand');
-			$("#loveBgm")[0].play();
+			startLove();
 		}
 	}).mousemove(function(e) {
 		var coords = getCanvasCoords(e);
@@ -216,19 +244,7 @@
 		var touch = e.originalEvent.touches[0];
 		var coords = getCanvasCoords(touch);
 		if (seed.hover(coords.x, coords.y)) {
-			hold = 0;
-			canvas.unbind("click");
-			canvas.unbind("mousemove");
-			canvas.unbind("touchstart");
-			canvas.removeClass('hand');
-			// 尝试播放音乐（移动端需要用户交互）
-			var bgm = $("#loveBgm")[0];
-			var playPromise = bgm.play();
-			if (playPromise !== undefined) {
-				playPromise.catch(function() {
-					// 自动播放被阻止时，首次点击再播放
-				});
-			}
+			startLove();
 		}
 	});
 
@@ -306,7 +322,18 @@
 		$await(seedAnimate());
 		$await(growAnimate());
 		$await(flowAnimate());
-		$await(moveAnimate());
+		// 竖屏模式下跳过树右移动画（文字在上方，不需要树移开）
+		if (!isMobilePortrait) {
+			$await(moveAnimate());
+		} else {
+			// 竖屏：简单做一个背景切换效果，然后直接进入文字
+			foot.draw();
+			canvas.parent().css("background", "url(" + tree.toDataURL('image/png') + ")");
+			canvas.css("background", "#ffe");
+			$await(Jscex.Async.sleep(300));
+			canvas.css("background", "none");
+			canvas.parent().css("background", "");
+		}
 		textAnimate().start();
 		$await(jumpAnimate());
 	}));

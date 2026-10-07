@@ -2,9 +2,10 @@ body{margin:0;padding:0;background:#ffe;font-size:14px;font-family:'微软雅黑
 a {color:#000;font-size:14px;}
 #main{width:100%;}
 #wrap{position:relative;margin:0 auto;width:1100px;height:680px;margin-top:10px;}
-#text{width:400px;height:425px;left:60px;top:80px;position:absolute;}
+#main{position:relative;}
+#text{width:400px;height:425px;left:calc(50% - 550px + 60px);top:90px;position:absolute;}
 #code{display:none;font-size:16px;}
-#clock-box {position:absolute;left:60px;top:550px;font-size:28px;display:none;}
+#clock-box {position:absolute;left:calc(50% - 550px + 60px);top:560px;font-size:28px;display:none;}
 #clock-box a {font-size:28px;text-decoration:none;}
 #clock{margin-left:48px;}
 #clock .digit {font-size:64px;}
@@ -32,13 +33,13 @@ a {color:#000;font-size:14px;}
         position: relative;
     }
 
+    /* wrap 由 JS 控制位置和缩放，这里只设基础样式 */
     #wrap {
         position: absolute !important;
         width: 1100px !important;
         height: 680px !important;
         margin: 0 !important;
         padding: 0 !important;
-        /* 位置和缩放由 JS 动态计算 */
     }
 
     #canvas {
@@ -47,49 +48,62 @@ a {color:#000;font-size:14px;}
         display: block !important;
     }
 
-    /* 文字移到顶部中央 */
+    /* 文字：固定在屏幕上方，不跟随缩放 */
     #text {
-        left: 50% !important;
-        top: 30px !important;
-        transform: translateX(-50%) !important;
-        width: 80% !important;
+        position: fixed !important;
+        left: 0 !important;
+        right: 0 !important;
+        top: 8% !important;
+        bottom: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
         height: auto !important;
+        transform: none !important;
         text-align: center !important;
-        position: absolute !important;
+        padding: 0 20px !important;
+        box-sizing: border-box !important;
+        z-index: 10 !important;
+        pointer-events: none;
     }
 
     #code {
-        font-size: 16px !important;
+        font-size: 15px !important;
         line-height: 1.8 !important;
+        display: none;
     }
 
     .say {
-        font-size: 16px !important;
+        font-size: 15px !important;
         margin-left: 0 !important;
+        display: inline !important;
     }
 
-    /* 时钟移到底部中央 */
+    /* 时钟：固定在屏幕下方，不跟随缩放 */
     #clock-box {
-        left: 50% !important;
+        position: fixed !important;
+        left: 0 !important;
+        right: 0 !important;
         top: auto !important;
-        bottom: 40px !important;
-        transform: translateX(-50%) !important;
+        bottom: 8% !important;
+        transform: none !important;
         text-align: center !important;
-        font-size: 20px !important;
+        font-size: 16px !important;
         width: 100% !important;
+        z-index: 10 !important;
+        pointer-events: none;
     }
 
     #clock-box font {
-        font-size: 20px !important;
+        font-size: 16px !important;
     }
 
     #clock {
         margin-left: 0 !important;
-        margin-top: 10px !important;
+        margin-top: 8px !important;
     }
 
     #clock .digit {
-        font-size: 36px !important;
+        font-size: 32px !important;
     }
 
     /* 底部来源文字 */
@@ -99,7 +113,7 @@ a {color:#000;font-size:14px;}
         left: 0 !important;
         right: 0 !important;
         margin: 0 !important;
-        padding: 10px 0 !important;
+        padding: 8px 0 !important;
         background: #ffe !important;
         z-index: 100 !important;
         text-align: center !important;
@@ -107,49 +121,44 @@ a {color:#000;font-size:14px;}
 
     body > div[style="text-align:center;"] p {
         margin: 0 !important;
-        font-size: 12px !important;
+        font-size: 11px !important;
     }
 
     body > div[style="text-align:center;"] a {
-        font-size: 12px !important;
+        font-size: 11px !important;
     }
 }
 
-/* 小屏手机进一步优化 */
+/* 小屏手机 */
 @media screen and (max-width: 480px) and (orientation: portrait) {
     #code {
-        font-size: 14px !important;
+        font-size: 13px !important;
         line-height: 1.7 !important;
     }
 
     .say {
-        font-size: 14px !important;
+        font-size: 13px !important;
     }
 
     #clock-box {
-        font-size: 16px !important;
-        bottom: 35px !important;
+        font-size: 14px !important;
+        bottom: 7% !important;
     }
 
     #clock-box font {
-        font-size: 16px !important;
+        font-size: 14px !important;
     }
 
     #clock .digit {
-        font-size: 28px !important;
+        font-size: 26px !important;
     }
 
-    body > div[style="text-align:center;"] p,
-    body > div[style="text-align:center;"] a {
-        font-size: 10px !important;
-    }
-
-    body > div[style="text-align:center;"] {
-        padding: 8px 0 !important;
+    #text {
+        top: 6% !important;
     }
 }
 
-/* 手机横屏时保持原来的缩放方式 */
+/* 手机横屏适配 */
 @media screen and (max-width: 900px) and (orientation: landscape) {
     html, body {
         width: 100%;
@@ -170,8 +179,7 @@ a {color:#000;font-size:14px;}
         width: 1100px !important;
         height: 680px !important;
         margin: 0 !important;
-        transform: scale(0.8);
-        transform-origin: center center;
+        position: relative;
         flex-shrink: 0;
     }
 
@@ -186,15 +194,15 @@ a {color:#000;font-size:14px;}
         left: 0;
         right: 0;
         margin: 0;
-        padding: 6px 0;
+        padding: 5px 0;
         background: #ffe;
         z-index: 100;
-        font-size: 11px;
+        font-size: 10px;
     }
 
     body > div[style="text-align:center;"] p,
     body > div[style="text-align:center;"] a {
         margin: 0;
-        font-size: 11px;
+        font-size: 10px;
     }
 }
