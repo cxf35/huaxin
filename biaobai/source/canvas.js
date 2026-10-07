@@ -4,6 +4,44 @@
 		$("#error").show();
 		return false
 	}
+
+	// 手机端自适应缩放
+	function resizeForMobile() {
+		var wrap = $('#wrap');
+		var windowWidth = $(window).width();
+		var designWidth = 1100;
+		var designHeight = 680;
+
+		if (windowWidth < designWidth) {
+			var scale = windowWidth / designWidth;
+			var scaledHeight = designHeight * scale;
+			
+			wrap.css({
+				'width': designWidth + 'px',
+				'height': designHeight + 'px',
+				'transform': 'scale(' + scale + ')',
+				'transform-origin': 'top center',
+				'margin': '0 auto',
+				'position': 'relative'
+			});
+
+			$('body').css('height', scaledHeight + 'px');
+		} else {
+			wrap.css({
+				'width': designWidth + 'px',
+				'height': designHeight + 'px',
+				'transform': 'none',
+				'margin': '10px auto 0'
+			});
+			$('body').css('height', 'auto');
+		}
+	}
+
+	resizeForMobile();
+	$(window).resize(function() {
+		resizeForMobile();
+	});
+
 	var width = canvas.width();
 	var height = canvas.height();
 	canvas.attr("width", width);
@@ -41,7 +79,7 @@
 			canvas.unbind("click");
 			canvas.unbind("mousemove");
 			canvas.removeClass('hand');
-			$("#loveBgm")[0].play();    //播放音乐
+			$("#loveBgm")[0].play();
 		}
 	}).mousemove(function(e) {
 		var offset = canvas.offset(),
@@ -107,11 +145,11 @@
 	}));
 	var textAnimate = eval(Jscex.compile("async",
 	function() {
-		var together = new Date();  //显示日期
+		var together = new Date();
 		together.setFullYear(lover.info.year, (lover.info.month - 1), (lover.info.day));
-		together.setHours(lover.info.hour); //小时
-		together.setMinutes(lover.info.minute); //分钟
-		together.setSeconds(lover.info.second); //秒钟
+		together.setHours(lover.info.hour);
+		together.setMinutes(lover.info.minute);
+		together.setSeconds(lover.info.second);
 		together.setMilliseconds(0);
 		$("#code").show().typewriter();
 		$("#clock-box").fadeIn(500);
