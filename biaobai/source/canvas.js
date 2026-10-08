@@ -402,10 +402,6 @@
 				'background-position': 'center center',
 				'background-size': '100% 100%'
 			});
-			// 短暂闪烁过渡效果
-			canvas.css("background", "#fffbe6");
-			$await(Jscex.Async.sleep(200));
-			canvas.css("background", "none");
 		} else {
 			// 桌面/横屏：树右移，露出左边文字
 			$await(moveAnimate());
