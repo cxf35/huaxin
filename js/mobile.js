@@ -8,6 +8,7 @@
     var _lastTap = 0;
     var _tapTimeout = 300;
     var _applied = false;
+    var _resetting = false;
 
     function isMobilePortrait() {
         var w = window.innerWidth || document.documentElement.clientWidth;
@@ -21,6 +22,29 @@
         if (!window.Flowtime || !Flowtime.toggleOverview) return;
         if (init._done) return;
         init._done = true;
+
+        // 单击缩略图退出 overview（走 Flowtime 内部 V() → af()），
+        // 此时双击处理器不会执行 removeHeart()，会导致心形 margin-top 残留、页面对不齐。
+        // 监听 flowtimenavigation 事件：一旦离开 overview 立即清除心形偏移，
+        // 并用 _resetting 防重入（gotoPage 会再次派发该事件，避免无限循环）。
+        if (Flowtime.addEventListener) {
+            Flowtime.addEventListener('flowtimenavigation', function(e) {
+                if (!e.isOverview && !_resetting) {
+                    _resetting = true;
+                    removeHeart();
+                    // 清除 margin-top 后 section 重新回流，需重算 transform 让页面精确对齐视口
+                    requestAnimationFrame(function() {
+                        // 注意：Flowtime 外层 API 没有 getCurrentSection/getCurrentPage，
+                        // 用 DOM 当前激活页（.ft-page.actual）与其 section 的 index 定位
+                        var cur = document.querySelector('.ft-page.actual');
+                        if (window.Flowtime && cur && cur.parentNode) {
+                            Flowtime.gotoPage(cur.parentNode.index, cur.index);
+                        }
+                        _resetting = false;
+                    });
+                }
+            });
+        }
 
         document.addEventListener('touchend', function(e) {
             var now = Date.now();
