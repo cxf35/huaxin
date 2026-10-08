@@ -1,0 +1,15 @@
+{
+  "redirects": [
+    {
+      "source": "/((?!0730ff5313b1fce9e06d1736ebc6f969\\.txt$).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "woaihua.xin"
+        }
+      ],
+      "destination": "https://www.woaihua.xin/$1",
+      "permanent": true
+    }
+  ]
+}
