@@ -2,53 +2,83 @@
 	var canvas = $('#canvas');
 	if (!canvas[0].getContext) {
 		$("#error").show();
-		return false
+		return false;
 	}
 
-	// 移动端缩放相关变量
+	// ============================================================
+	//  响应式布局：根据屏幕尺寸动态调整 canvas 位置和缩放
+	// ============================================================
+
 	var mobileScale = 1;
 	var isMobilePortrait = false;
 	var isMobileLandscape = false;
 
-	function resizeForMobile() {
+	// 树在 canvas 中的大致位置（用于定位参考）
+	// 通过分析 branch 数据估算：
+	var tree = {
+		centerX: 510,   // 树的水平中心点（canvas 坐标）
+		centerY: 440,   // 树的垂直中心点（canvas 坐标）
+		width: 380,     // 树的大致宽度
+		height: 480,    // 树的大致高度（从 y=200 到 y=680）
+		topY: 200,      // 树冠顶部 y
+		bottomY: 680    // 树干底部 y
+	};
+
+	function resizeLayout() {
 		var wrap = $('#wrap');
 		var main = $('#main');
+		var textEl = $('#text');
+		var clockEl = $('#clock-box');
 		var windowW = $(window).width();
 		var windowH = $(window).height();
 		var designW = 1100;
 		var designH = 680;
-		var bottomBarH = 40; // 底部来源文字预留高度
 
 		isMobilePortrait = (windowW < 768 && windowH > windowW);
 		isMobileLandscape = (windowW < 900 && windowW >= windowH);
 
+		// ---------- 手机竖屏：上(文字)中(树)下(计时)三段布局 ----------
 		if (isMobilePortrait) {
-			// ========== 手机竖屏 ==========
-			// 可用高度 = 屏幕高度 - 底部来源条
-			var availableH = windowH - bottomBarH;
+			// 布局比例：
+			//   顶部 0-32%：表白文字（可滚动）
+			//   中部 28-90%：爱心树（约 62% 高度）
+			//   底部 90-97%：计时器
+			//   最底部 97-100%：来源栏
+			var treeTopRatio = 0.28;   // 树顶部位置
+			var treeBottomRatio = 0.90; // 树底部位置
+			var treeHeightRatio = treeBottomRatio - treeTopRatio; // 0.62
 
-			// 按高度缩放，让树尽可能大（占可用高度的 80%，上下留出文字和时钟空间）
-			var scale = availableH / designH * 0.85;
+			var scale = (windowH * treeHeightRatio) / designH;
+			var scaledW = designW * scale;
 
-			// 限制最小缩放
-			scale = Math.max(0.5, scale);
+			// 宽度限制：最多允许超出屏幕 50%（左右各裁 25%），让树更大更饱满
+			var maxScale = (windowW * 1.50) / designW;
+			if (scale > maxScale) {
+				scale = maxScale;
+				scaledW = designW * scale;
+			}
+
+			// 最小缩放：至少占高度的 50%
+			var minScale = (windowH * 0.50) / designH;
+			if (scale < minScale) {
+				scale = minScale;
+				scaledW = designW * scale;
+			}
+
 			mobileScale = scale;
 
-			// 计算缩放后的 wrap 尺寸
-			var scaledW = designW * scale;
-			var scaledH = designH * scale;
-
-			// 水平居中（左右可能裁剪，但树的主体在中间）
+			// 树定位：水平居中，顶部在 treeTopRatio 位置
 			var wrapLeft = (windowW - scaledW) / 2;
-			// 垂直居中
-			var wrapTop = (availableH - scaledH) / 2;
+			var wrapTop = windowH * treeTopRatio;
 
+			// 应用样式
 			main.css({
 				'width': '100%',
 				'height': windowH + 'px',
 				'overflow': 'hidden',
 				'position': 'relative',
-				'display': 'block'
+				'display': 'block',
+				'min-height': 'auto'
 			});
 
 			wrap.css({
@@ -62,8 +92,10 @@
 				'transform-origin': '0 0'
 			});
 
-			// 重置文字和时钟的内联样式，让 CSS 媒体查询的 fixed 定位生效
-			$('#text, #clock-box, #code, #clock .digit').removeAttr('style');
+			// 竖屏：文字和时钟由 CSS 控制（absolute 定位在 main 内）
+			textEl.removeAttr('style');
+			clockEl.removeAttr('style');
+			$('#code, #clock .digit, .clock-label, .clock-sub').removeAttr('style');
 
 			$('html, body').css({
 				'width': '100%',
@@ -73,22 +105,27 @@
 				'padding': '0'
 			});
 
+		// ---------- 手机横屏：整体等比缩放 ----------
 		} else if (isMobileLandscape) {
-			// ========== 手机横屏：整体等比缩放居中 ==========
-			var scaleL = Math.min(windowW / designW, (windowH - 30) / designH);
+			var footerHL = 28;
+			var scaleL = Math.min(
+				windowW / designW,
+				(windowH - footerHL) / designH
+			);
 			mobileScale = scaleL;
 
 			var scaledWL = designW * scaleL;
 			var scaledHL = designH * scaleL;
 			var wrapLeftL = (windowW - scaledWL) / 2;
-			var wrapTopL = (windowH - scaledHL) / 2;
+			var wrapTopL = (windowH - footerHL - scaledHL) / 2;
 
 			main.css({
 				'width': '100%',
 				'height': windowH + 'px',
 				'display': 'block',
 				'overflow': 'hidden',
-				'position': 'relative'
+				'position': 'relative',
+				'min-height': 'auto'
 			});
 
 			wrap.css({
@@ -103,28 +140,24 @@
 			});
 
 			// 文字和时钟跟随 wrap 定位和缩放
-			var textEl = $('#text');
-			var clockEl = $('#clock-box');
 			textEl.css({
 				'position': 'absolute',
 				'left': (wrapLeftL + 60 * scaleL) + 'px',
-				'top': (wrapTopL + 80 * scaleL) + 'px',
+				'top': (wrapTopL + 90 * scaleL) + 'px',
 				'width': (400 * scaleL) + 'px',
-				'height': (425 * scaleL) + 'px',
-				'font-size': (16 * scaleL) + 'px',
-				'transform': 'none',
-				'text-align': 'left'
+				'height': (425 * scaleL) + 'px'
 			});
+			$('#code').css('font-size', (16 * scaleL) + 'px');
+
 			clockEl.css({
 				'position': 'absolute',
 				'left': (wrapLeftL + 60 * scaleL) + 'px',
-				'top': (wrapTopL + 550 * scaleL) + 'px',
-				'font-size': (28 * scaleL) + 'px',
-				'transform': 'none',
-				'text-align': 'left'
+				'top': (wrapTopL + 560 * scaleL) + 'px',
+				'font-size': (24 * scaleL) + 'px'
 			});
-			$('#clock .digit').css('font-size', (64 * scaleL) + 'px');
-			$('#code').css('font-size', (16 * scaleL) + 'px');
+			$('#clock .digit').css('font-size', (56 * scaleL) + 'px');
+			$('.clock-label').css('font-size', (20 * scaleL) + 'px');
+			$('.clock-sub').css('font-size', (16 * scaleL) + 'px');
 
 			$('html, body').css({
 				'width': '100%',
@@ -132,8 +165,8 @@
 				'overflow': 'hidden'
 			});
 
+		// ---------- 桌面端：恢复原始布局 ----------
 		} else {
-			// ========== 桌面端 ==========
 			mobileScale = 1;
 			isMobilePortrait = false;
 			isMobileLandscape = false;
@@ -141,8 +174,10 @@
 			main.css({
 				'width': '100%',
 				'height': 'auto',
+				'min-height': '100vh',
 				'display': 'block',
-				'overflow': 'visible'
+				'overflow': 'visible',
+				'position': 'relative'
 			});
 
 			wrap.css({
@@ -155,8 +190,10 @@
 				'margin': '10px auto 0'
 			});
 
-			// 重置文字和时钟样式
-			$('#text, #clock-box, #code, #clock .digit').removeAttr('style');
+			// 清除所有 JS 设置的内联样式，让桌面 CSS 生效
+			textEl.removeAttr('style');
+			clockEl.removeAttr('style');
+			$('#code, #clock .digit, .clock-label, .clock-sub').removeAttr('style');
 
 			$('html, body').css({
 				'width': 'auto',
@@ -166,16 +203,22 @@
 		}
 	}
 
-	// 初始化和窗口变化时调用
-	resizeForMobile();
+	// 初始化 & 窗口变化时重新计算
+	resizeLayout();
 	$(window).resize(function() {
-		resizeForMobile();
+		resizeLayout();
 	});
+
+
+	// ============================================================
+	//  Canvas 初始化 & 树动画
+	// ============================================================
 
 	var width = canvas.width();
 	var height = canvas.height();
 	canvas.attr("width", width);
 	canvas.attr("height", height);
+
 	var opts = {
 		seed: {
 			x: width / 2 - 20,
@@ -194,18 +237,23 @@
 			speed: 10,
 		}
 	};
-	var tree = new Tree(canvas[0], width, height, opts);
-	var seed = tree.seed;
-	var foot = tree.footer;
+
+	var treeObj = new Tree(canvas[0], width, height, opts);
+	var seed = treeObj.seed;
+	var foot = treeObj.footer;
 	var hold = 1;
 
-	// 获取缩放后的正确点击坐标
+
+	// ============================================================
+	//  点击 / 触摸 坐标换算（考虑缩放）
+	// ============================================================
+
 	function getCanvasCoords(e) {
 		var offset = canvas.offset();
 		var x = e.pageX - offset.left;
 		var y = e.pageY - offset.top;
 
-		// 缩放后，需要将视觉坐标转换回 canvas 原始坐标
+		// 缩放后：视觉坐标 → canvas 原始坐标
 		if (mobileScale !== 1) {
 			x = x / mobileScale;
 			y = y / mobileScale;
@@ -220,7 +268,8 @@
 		canvas.unbind("mousemove");
 		canvas.unbind("touchstart");
 		canvas.removeClass('hand');
-		// 尝试播放音乐
+
+		// 尝试播放音乐（移动端需要用户交互触发）
 		var bgm = $("#loveBgm")[0];
 		var playPromise = bgm.play();
 		if (playPromise !== undefined) {
@@ -228,6 +277,7 @@
 		}
 	}
 
+	// 鼠标点击
 	canvas.click(function(e) {
 		var coords = getCanvasCoords(e);
 		if (seed.hover(coords.x, coords.y)) {
@@ -238,7 +288,7 @@
 		canvas.toggleClass('hand', seed.hover(coords.x, coords.y));
 	});
 
-	// 触摸设备支持
+	// 触摸点击（手机端）
 	canvas.on('touchstart', function(e) {
 		e.preventDefault();
 		var touch = e.originalEvent.touches[0];
@@ -247,6 +297,11 @@
 			startLove();
 		}
 	});
+
+
+	// ============================================================
+	//  动画序列
+	// ============================================================
 
 	var seedAnimate = eval(Jscex.compile("async",
 	function() {
@@ -264,44 +319,49 @@
 			$await(Jscex.Async.sleep(10));
 		}
 	}));
+
 	var growAnimate = eval(Jscex.compile("async",
 	function() {
 		do {
-			tree.grow();
+			treeObj.grow();
 			$await(Jscex.Async.sleep(10));
-		} while ( tree . canGrow ());
+		} while ( treeObj . canGrow ());
 	}));
+
 	var flowAnimate = eval(Jscex.compile("async",
 	function() {
 		do {
-			tree.flower(2);
+			treeObj.flower(2);
 			$await(Jscex.Async.sleep(10));
-		} while ( tree . canFlower ());
+		} while ( treeObj . canFlower ());
 	}));
+
+	// 树右移动画（桌面端用，文字在左边，树移到右边露出文字）
 	var moveAnimate = eval(Jscex.compile("async",
 	function() {
-		tree.snapshot("p1", 240, 0, 610, 680);
-		while (tree.move("p1", 500, 0)) {
+		treeObj.snapshot("p1", 240, 0, 610, 680);
+		while (treeObj.move("p1", 500, 0)) {
 			foot.draw();
 			$await(Jscex.Async.sleep(10));
 		}
 		foot.draw();
-		tree.snapshot("p2", 500, 0, 610, 680);
-		canvas.parent().css("background", "url(" + tree.toDataURL('image/png') + ")");
+		treeObj.snapshot("p2", 500, 0, 610, 680);
+		canvas.parent().css("background", "url(" + treeObj.toDataURL('image/png') + ")");
 		canvas.css("background", "#ffe");
 		$await(Jscex.Async.sleep(300));
 		canvas.css("background", "none");
 	}));
+
 	var jumpAnimate = eval(Jscex.compile("async",
 	function() {
-		var ctx = tree.ctx;
 		while (true) {
-			tree.ctx.clearRect(0, 0, width, height);
-			tree.jump();
+			treeObj.ctx.clearRect(0, 0, width, height);
+			treeObj.jump();
 			foot.draw();
 			$await(Jscex.Async.sleep(25));
 		}
 	}));
+
 	var textAnimate = eval(Jscex.compile("async",
 	function() {
 		var together = new Date();
@@ -317,25 +377,43 @@
 			$await(Jscex.Async.sleep(1000));
 		}
 	}));
+
+	// 主流程
 	var runAsync = eval(Jscex.compile("async",
 	function() {
-		$await(seedAnimate());
-		$await(growAnimate());
-		$await(flowAnimate());
-		// 竖屏模式下跳过树右移动画（文字在上方，不需要树移开）
-		if (!isMobilePortrait) {
-			$await(moveAnimate());
-		} else {
-			// 竖屏：简单做一个背景切换效果，然后直接进入文字
+		$await(seedAnimate());    // 爱心种子动画
+		$await(growAnimate());    // 树生长
+		$await(flowAnimate());    // 开花
+
+		// 重新判断当前是否为手机竖屏（防止窗口旋转后状态不一致）
+		var w = $(window).width();
+		var h = $(window).height();
+		var isPortrait = (w < 768 && h > w);
+
+		if (isPortrait) {
+			// 竖屏模式：文字在树的上方，不需要树右移
+			// 把树保存为背景图（后面 jumpAnimate 会清空 canvas 画花瓣）
 			foot.draw();
-			canvas.parent().css("background", "url(" + tree.toDataURL('image/png') + ")");
-			canvas.css("background", "#ffe");
-			$await(Jscex.Async.sleep(300));
+			var dataUrl = treeObj.toDataURL('image/png');
+			// 将树保存为 wrap 的背景图（铺满整个 wrap）
+			canvas.parent().css({
+				'background-image': 'url(' + dataUrl + ')',
+				'background-repeat': 'no-repeat',
+				'background-position': 'center center',
+				'background-size': '100% 100%'
+			});
+			// 短暂闪烁过渡效果
+			canvas.css("background", "#fffbe6");
+			$await(Jscex.Async.sleep(200));
 			canvas.css("background", "none");
-			canvas.parent().css("background", "");
+		} else {
+			// 桌面/横屏：树右移，露出左边文字
+			$await(moveAnimate());
 		}
-		textAnimate().start();
-		$await(jumpAnimate());
+
+		textAnimate().start();    // 文字打字机 + 时钟
+		$await(jumpAnimate());    // 花瓣飘落（循环）
 	}));
+
 	runAsync().start();
 })();

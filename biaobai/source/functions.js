@@ -23,9 +23,15 @@ $(window).resize(function() {
 				} else {
 					progress++;
 				}
-				$ele.html(str.substring(0, progress) + (progress & 1 ? '_' : ''));
+				// 用不闪烁的光标代替闪烁光标，避免文字抖动
+				// 光标始终显示，颜色较淡，不影响阅读
+				$ele.html(str.substring(0, progress) + '<span class="tw-cursor">|</span>');
 				if (progress >= str.length) {
 					clearInterval(timer);
+					// 打字完成后淡出光标
+					setTimeout(function() {
+						$ele.find('.tw-cursor').css('opacity', '0');
+					}, 500);
 				}
 			}, 75);
 		});
