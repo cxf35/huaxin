@@ -1,15 +1,25 @@
 {
-  "redirects": [
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
     {
-      "source": "/((?!0730ff5313b1fce9e06d1736ebc6f969\\.txt$).*)",
-      "has": [
+      "source": "/0730ff5313b1fce9e06d1736ebc6f969.txt",
+      "destination": "/0730ff5313b1fce9e06d1736ebc6f969.txt"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/0730ff5313b1fce9e06d1736ebc6f969.txt",
+      "headers": [
         {
-          "type": "host",
-          "value": "woaihua.xin"
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
         }
-      ],
-      "destination": "https://www.woaihua.xin/$1",
-      "permanent": true
+      ]
     }
   ]
 }
