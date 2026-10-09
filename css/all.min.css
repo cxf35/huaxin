@@ -94,3 +94,9 @@ html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abb
         background: linear-gradient(180deg, #fff0f5 0%, #ffd9e8 50%, #ffc2d1 100%) !important;
     }
 }
+
+/* mobile: 进度条缩略图改为 9:16 竖方块（自动换行多列） */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+    .ft-page-thumb { width: 9px; height: 16px; margin-right: 2px; margin-bottom: 2px; }
+    .ft-default-progress { max-width: 88px; }
+}
