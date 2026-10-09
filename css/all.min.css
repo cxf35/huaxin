@@ -88,3 +88,9 @@ html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abb
 @media screen and (max-width: 768px) and (orientation: portrait) {
     .ft-default-progress { right: auto; left: 2rem; bottom: 3rem; }
 }
+/* mobile overview: 爱心外灰色背景改为温馨粉色渐变（电脑端不变） */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+    html {
+        background: linear-gradient(180deg, #fff0f5 0%, #ffd9e8 50%, #ffc2d1 100%) !important;
+    }
+}
